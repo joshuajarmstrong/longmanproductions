@@ -290,14 +290,22 @@
   wrap.addEventListener('mouseleave', onLeave);
   tick();
 
-  // --- Click to reveal email + copy to clipboard ---
-  let emailVisible = false;
+  // cursor-follow email
+let idleTimer;
 
-  function showEmail(){
-    emailVisible = !emailVisible;
-    email.classList.toggle('show', emailVisible);
-    hint.classList.toggle('show', !emailVisible);
-  }
+document.addEventListener('mousemove', (e) => {
+
+  email.style.left = e.clientX + "px";
+  email.style.top = e.clientY + "px";
+
+  email.style.opacity = 1;
+
+  clearTimeout(idleTimer);
+
+  idleTimer = setTimeout(() => {
+    email.style.opacity = 0;
+  }, 1200);
+});
 
   wrap.addEventListener('click', showEmail);
 
