@@ -20,12 +20,10 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     animation: fadein 1.8s ease forwards;
     opacity: 0;
     user-select:none;
   }
-
   @keyframes fadein { to { opacity:1; } }
 
   /* projector flash */
@@ -96,6 +94,7 @@
     justify-content:center;
     transform-style: preserve-3d;
     will-change: transform, filter;
+    cursor: pointer;
   }
 
   img{
@@ -120,7 +119,7 @@
     99% { transform:translate3d(-1px, -2px,0); opacity:.94; }
   }
 
-  /* hover distortion "split" layers */
+  /* hover distortion "split" layers (subtle) */
   .layer{
     position:absolute;
     inset:0;
@@ -134,8 +133,7 @@
   }
   .layer.red { filter: hue-rotate(0deg) saturate(2); transform: translate3d(-2px,0,0); }
   .layer.cyan{ filter: hue-rotate(180deg) saturate(2); transform: translate3d(2px,0,0); }
-
-  .wrap:hover .layer{ opacity:.45; }
+  .wrap:hover .layer{ opacity:.35; }
 
   /* signal drop overlay */
   .drop{
@@ -152,27 +150,33 @@
     100%{opacity:0}
   }
 
-  /* cursor-follow email */
+  /* CLICK-TO-REVEAL email (square, semi-transparent, old-style serif) */
   .email{
     position:fixed;
     left:0;
     top:0;
     transform:translate(-50%,-50%);
-    color:rgba(255,255,255,.92);
-    font-size:14px;
-    letter-spacing:0.08em;
-    text-transform:lowercase;
-
     opacity:0;
     pointer-events:none;
+    white-space:nowrap;
 
-    background: rgba(0,0,0,.45);
-    border: 1px solid rgba(255,255,255,.15);
     padding: 10px 12px;
-    border-radius: 999px;
+    background: rgba(0,0,0,.42);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 2px;            /* squared off */
+    box-shadow: 0 0 18px rgba(0,0,0,.35);
+
+    color: rgba(255,255,255,.92);
+    font-size: 15px;
+    letter-spacing: 0.10em;
+    text-transform: lowercase;
+
+    /* “old” vibe without external fonts */
+    font-family: "Garamond", "Palatino Linotype", "Book Antiqua", "Georgia", "Times New Roman", serif;
+    font-variant: small-caps;
+
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    white-space:nowrap;
 
     will-change: left, top, opacity, transform;
   }
@@ -181,50 +185,20 @@
     pointer-events:auto;
   }
   .email a{
-    color:rgba(255,255,255,.95);
+    color:rgba(255,255,255,.96);
     text-decoration:none;
   }
   .email a:hover{ text-decoration: underline; }
 
   .copied{
     display:none;
-    margin-left:10px;
+    margin-left:12px;
     opacity:.7;
+    font-variant: normal;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 12px;
   }
-
-  /* subtle glitch pop on email when "crossing" figure */
-  .email.glitch{
-    animation: emailGlitch 260ms steps(2,end) 1;
-  }
-  @keyframes emailGlitch{
-    0%{ transform:translate(-50%,-50%); }
-    25%{ transform:translate(calc(-50% - 2px), calc(-50% + 1px)); }
-    50%{ transform:translate(calc(-50% + 2px), calc(-50% - 1px)); }
-    100%{ transform:translate(-50%,-50%); }
-  }
-
-  /* tiny helper text on mobile */
-  .mobileHint{
-    position:fixed;
-    left:50%;
-    bottom:18px;
-    transform:translateX(-50%);
-    color:rgba(255,255,255,.45);
-    font-size:12px;
-    letter-spacing:0.12em;
-    text-transform:uppercase;
-    opacity:0;
-    transition: opacity 400ms ease;
-    pointer-events:none;
-    text-align:center;
-    padding: 6px 10px;
-    background: rgba(0,0,0,.25);
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 999px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
-  .mobileHint.show{ opacity:1; }
 
   /* accessibility */
   @media (prefers-reduced-motion: reduce){
@@ -239,7 +213,7 @@
   <div class="flash"></div>
   <div class="drop" id="drop"></div>
 
-  <div class="wrap" id="wrap" aria-label="Longman Productions">
+  <div class="wrap" id="wrap" aria-label="Longman Productions (click for contact)">
     <img id="mainImg" class="idle" src="longman.png" alt="Long Man of Wilmington (glitched)" />
     <div class="layer red" aria-hidden="true"><img src="longman.png" alt="" /></div>
     <div class="layer cyan" aria-hidden="true"><img src="longman.png" alt="" /></div>
@@ -250,39 +224,35 @@
     <span class="copied" id="copied">copied</span>
   </div>
 
-  <div class="mobileHint" id="mobileHint">tap & hold near the figure</div>
-
   <div class="vignette"></div>
   <div class="crt"></div>
   <div class="grain"></div>
 
 <script>
 (() => {
-  const wrap = document.getElementById('wrap');
-  const img  = document.getElementById('mainImg');
+  const wrap  = document.getElementById('wrap');
+  const img   = document.getElementById('mainImg');
   const email = document.getElementById('email');
-  const copied = document.getElementById('copied');
-  const drop = document.getElementById('drop');
-  const mobileHint = document.getElementById('mobileHint');
+  const copied= document.getElementById('copied');
+  const drop  = document.getElementById('drop');
 
-  // ---------------------------
-  // Helpers
-  // ---------------------------
+  const EMAIL = 'hello@longmanproductions.uk';
+
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp  = (a,b,t) => a + (b-a)*t;
 
   // ---------------------------
-  // Cursor parallax on figure
+  // Parallax on figure
   // ---------------------------
   let targetX = 0, targetY = 0;
   let currentX = 0, currentY = 0;
 
-  function onMoveParallax(clientX, clientY){
+  function onMoveParallax(x, y){
     const r = wrap.getBoundingClientRect();
     const cx = r.left + r.width/2;
     const cy = r.top + r.height/2;
-    const dx = (clientX - cx) / (r.width/2);
-    const dy = (clientY - cy) / (r.height/2);
+    const dx = (x - cx) / (r.width/2);
+    const dy = (y - cy) / (r.height/2);
     targetX = clamp(dx, -1, 1);
     targetY = clamp(dy, -1, 1);
   }
@@ -304,97 +274,57 @@
   tickParallax();
 
   // ---------------------------
-  // Email follows cursor (with lag)
-  // + only shows when near figure (proximity)
-  // + glitch pop when crossing into proximity
+  // Email: ONLY show after click
+  // Then follow mouse while visible
   // ---------------------------
-  const EMAIL = 'hello@longmanproductions.uk';
+  let emailVisible = false;
 
   let mouseX = window.innerWidth / 2;
   let mouseY = window.innerHeight / 2;
-
   let emailX = mouseX;
   let emailY = mouseY;
 
-  let proximity = false;
-  let lastProximity = false;
-
-  // How close to the figure to reveal (in px, relative to wrap box)
-  const PROX_PAD = 120;
-
-  // Fade out when idle even if last proximity was true
-  let idleTimer = null;
-
-  function computeProximity(x,y){
-    const r = wrap.getBoundingClientRect();
-    const inside =
-      x >= (r.left - PROX_PAD) &&
-      x <= (r.right + PROX_PAD) &&
-      y >= (r.top - PROX_PAD) &&
-      y <= (r.bottom + PROX_PAD);
-
-    return inside;
+  function setEmailVisible(v){
+    emailVisible = v;
+    email.classList.toggle('show', v);
   }
 
-  function setEmailVisible(isVisible){
-    email.classList.toggle('show', isVisible);
-  }
+  wrap.addEventListener('click', () => {
+    setEmailVisible(!emailVisible);
+  });
 
-  function pingEmailGlitch(){
-    email.classList.remove('glitch');
-    // force reflow
-    void email.offsetWidth;
-    email.classList.add('glitch');
-  }
-
-  function scheduleIdleHide(){
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      setEmailVisible(false);
-    }, 1200);
-  }
+  // ESC hides it (nice on desktop)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setEmailVisible(false);
+  });
 
   document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
-
     onMoveParallax(mouseX, mouseY);
-
-    proximity = computeProximity(mouseX, mouseY);
-
-    // show only when near figure
-    setEmailVisible(proximity);
-
-    // glitch when crossing into the zone
-    if (proximity && !lastProximity) {
-      pingEmailGlitch();
-    }
-    lastProximity = proximity;
-
-    scheduleIdleHide();
-  }, { passive: true });
+  }, { passive:true });
 
   function tickEmail(){
-    // lag follow
-    emailX = lerp(emailX, mouseX, 0.14);
-    emailY = lerp(emailY, mouseY, 0.14);
+    if (emailVisible){
+      emailX = lerp(emailX, mouseX, 0.14);
+      emailY = lerp(emailY, mouseY, 0.14);
 
-    // small offset so it doesn't sit directly under cursor
-    const ox = 14, oy = 18;
-    email.style.left = (emailX + ox) + "px";
-    email.style.top  = (emailY + oy) + "px";
-
+      // offset so it doesn’t sit under the cursor
+      const ox = 16, oy = 18;
+      email.style.left = (emailX + ox) + "px";
+      email.style.top  = (emailY + oy) + "px";
+    }
     requestAnimationFrame(tickEmail);
   }
   tickEmail();
 
-  // Copy on click (while still letting mailto work)
+  // Copy on click (while mailto still works)
   email.addEventListener('click', async () => {
-    try {
+    try{
       await navigator.clipboard.writeText(EMAIL);
       copied.style.display = 'inline';
       setTimeout(() => copied.style.display = 'none', 900);
-    } catch (_) {}
+    }catch(_){}
   });
 
   // ---------------------------
@@ -409,76 +339,6 @@
     setTimeout(() => { signalDrop(); scheduleDrop(); }, ms);
   }
   scheduleDrop();
-
-  // ---------------------------
-  // Mobile: tap & hold near figure to reveal email
-  // + tap once to enable gyroscope drift
-  // ---------------------------
-  let touchHoldTimer = null;
-  let gyroEnabled = false;
-
-  function showMobileHint(){
-    mobileHint.classList.add('show');
-    setTimeout(() => mobileHint.classList.remove('show'), 2200);
-  }
-
-  async function enableGyro(){
-    if (gyroEnabled) return;
-    gyroEnabled = true;
-
-    if (!window.DeviceOrientationEvent) return;
-
-    // iOS permission gate
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-      try {
-        const res = await DeviceOrientationEvent.requestPermission();
-        if (res !== 'granted') return;
-      } catch (_) { return; }
-    }
-
-    window.addEventListener('deviceorientation', (ev) => {
-      const g = clamp(ev.gamma || 0, -30, 30);
-      const b = clamp(ev.beta  || 0, -30, 30);
-      // gentle drift contribution
-      targetX = (g / 30) * 0.35;
-      targetY = (b / 30) * 0.35;
-    }, { passive: true });
-  }
-
-  // On first interaction, enable gyro (safe on desktop too)
-  window.addEventListener('pointerdown', enableGyro, { once: true });
-
-  // Tap & hold logic (works on mobile and trackpads too)
-  window.addEventListener('pointerdown', (e) => {
-    // only bother showing hint on coarse pointers (phones)
-    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
-      showMobileHint();
-    }
-
-    const x = e.clientX;
-    const y = e.clientY;
-
-    // start hold timer only if near the figure
-    if (computeProximity(x,y)) {
-      touchHoldTimer = setTimeout(() => {
-        // reveal email at press point
-        mouseX = x; mouseY = y;
-        proximity = true;
-        setEmailVisible(true);
-        pingEmailGlitch();
-        scheduleIdleHide();
-      }, 420); // hold threshold
-    }
-  }, { passive: true });
-
-  window.addEventListener('pointerup', () => {
-    clearTimeout(touchHoldTimer);
-  }, { passive: true });
-
-  window.addEventListener('pointercancel', () => {
-    clearTimeout(touchHoldTimer);
-  }, { passive: true });
-
 })();
 </script>
 </body>
