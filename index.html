@@ -159,25 +159,27 @@
   }
 
   /* email reveal */
-  .email{
-    position:fixed;
-    left:50%;
-    bottom:28px;
-    transform:translateX(-50%);
-    color:rgba(255,255,255,.9);
-    font-size:14px;
-    letter-spacing:0.08em;
-    text-transform:lowercase;
-    opacity:0;
-    pointer-events:none;
-    transition: opacity 300ms ease, transform 300ms ease;
-    background: rgba(0,0,0,.35);
-    border: 1px solid rgba(255,255,255,.12);
-    padding: 10px 12px;
-    border-radius: 999px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
+.email{
+  position:fixed;
+  left:0;
+  top:0;
+  transform:translate(-50%,-50%);
+  color:rgba(255,255,255,.9);
+  font-size:14px;
+  letter-spacing:0.08em;
+  background: rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.15);
+  padding:8px 10px;
+  border-radius:999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events:auto;
+  opacity:0;
+  transition:
+    opacity .25s ease,
+    transform .08s linear;
+  white-space:nowrap;
+}
   .email.show{
     opacity:1;
     pointer-events:auto;
