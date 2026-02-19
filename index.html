@@ -150,57 +150,59 @@
     100%{opacity:0}
   }
 
-  /* CLICK-TO-REVEAL email (square, semi-transparent, old-style serif) */
+  /* OLD LABEL CAPTION email (square, semi-transparent) */
   .email{
-    position:fixed;
-    left:0;
-    top:0;
-    transform:translate(-50%,-50%);
-    opacity:0;
-    pointer-events:none;
-    white-space:nowrap;
+    position: fixed;
+    left: 0;
+    top: 0;
 
-    padding: 10px 12px;
-    background: rgba(0,0,0,.42);
-    border: 1px solid rgba(255,255,255,.18);
-    border-radius: 2px;            /* squared off */
-    box-shadow: 0 0 18px rgba(0,0,0,.35);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
 
-    color: rgba(255,255,255,.92);
+    border-radius: 0;
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(255,255,255,0.26);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.7),
+      0 10px 30px rgba(0,0,0,0.25);
+
+    padding: 10px 14px;
+
+    color: rgba(255,248,235,0.92);
+
+    font-family: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
     font-size: 15px;
-    letter-spacing: 0.10em;
-    text-transform: lowercase;
-
-    /* “old” vibe without external fonts */
-    font-family: "Garamond", "Palatino Linotype", "Book Antiqua", "Georgia", "Times New Roman", serif;
+    letter-spacing: 0.14em;
     font-variant: small-caps;
 
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 
-    will-change: left, top, opacity, transform;
+    user-select: text;
+    will-change: left, top, opacity;
   }
   .email.show{
-    opacity:1;
-    pointer-events:auto;
+    opacity: 1;
+    pointer-events: auto;
   }
   .email a{
-    color:rgba(255,255,255,.96);
-    text-decoration:none;
+    color: rgba(255,248,235,0.95);
+    text-decoration: none;
   }
-  .email a:hover{ text-decoration: underline; }
-
+  .email a:hover{
+    text-decoration: underline;
+  }
   .copied{
     display:none;
     margin-left:12px;
-    opacity:.7;
+    opacity:.75;
+    letter-spacing: .10em;
     font-variant: normal;
-    letter-spacing: 0.06em;
     text-transform: uppercase;
-    font-size: 12px;
+    font-size: 11px;
   }
 
-  /* accessibility */
   @media (prefers-reduced-motion: reduce){
     *{ animation: none !important; transition:none !important; }
     body{ opacity:1; }
@@ -274,13 +276,15 @@
   tickParallax();
 
   // ---------------------------
-  // Email: ONLY show after click
-  // Then follow mouse while visible
+  // Email: click to toggle; follows mouse while visible
+  // Freezes when hovered so it's easy to click
   // ---------------------------
   let emailVisible = false;
+  let freezeEmail = false;
 
   let mouseX = window.innerWidth / 2;
   let mouseY = window.innerHeight / 2;
+
   let emailX = mouseX;
   let emailY = mouseY;
 
@@ -293,7 +297,6 @@
     setEmailVisible(!emailVisible);
   });
 
-  // ESC hides it (nice on desktop)
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') setEmailVisible(false);
   });
@@ -304,13 +307,15 @@
     onMoveParallax(mouseX, mouseY);
   }, { passive:true });
 
-  function tickEmail(){
-    if (emailVisible){
-      emailX = lerp(emailX, mouseX, 0.14);
-      emailY = lerp(emailY, mouseY, 0.14);
+  email.addEventListener('mouseenter', () => { freezeEmail = true; });
+  email.addEventListener('mouseleave', () => { freezeEmail = false; });
 
-      // offset so it doesn’t sit under the cursor
-      const ox = 16, oy = 18;
+  function tickEmail(){
+    if (emailVisible && !freezeEmail){
+      emailX = lerp(emailX, mouseX, 0.16);
+      emailY = lerp(emailY, mouseY, 0.16);
+
+      const ox = 18, oy = 22;
       email.style.left = (emailX + ox) + "px";
       email.style.top  = (emailY + oy) + "px";
     }
@@ -318,7 +323,7 @@
   }
   tickEmail();
 
-  // Copy on click (while mailto still works)
+  // Copy on click (and the mailto link still works)
   email.addEventListener('click', async () => {
     try{
       await navigator.clipboard.writeText(EMAIL);
